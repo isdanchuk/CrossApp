@@ -21,3 +21,9 @@ dotnet build
 
 # Запуск консольного застосунку
 dotnet run --project src/Cli
+
+## Порівняння режимів публікації
+| RID | Режим публікації | Розмір каталогу | Потрібен встановлений .NET Runtime |
+| :--- | :--- | :--- | :--- |
+| `osx-arm64` | self-contained | ~83 МБ | Ні |
+| `osx-arm64` | framework-dependent | ~0.17 МБ | Так (.NET 10) |

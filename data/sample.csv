@@ -1,0 +1,15 @@
+id;isbn;title;year;author
+B-001;978-0132350884;Clean Code;2008;Robert Martin
+B-002;978-0201633610;Design Patterns;1994;Erich Gamma
+B-003;978-0131103627;The C Programming Language;1978;Brian Kernighan
+B-004;978-0321125217;Domain-Driven Design;2003;Eric Evans
+B-005;978-0596007126;Head First Design Patterns;2004;Eric Freeman
+B-006;978-0134494166;Clean Architecture;2017;Robert Martin
+B-007;978-1491950357;Building Microservices;2015;Sam Newman
+B-008;978-0321146533;Test Driven Development;2002;Kent Beck
+B-009;978-0134757599;Refactoring;2018;Martin Fowler
+B-010;978-1617294532;C# in Depth;2019;Jon Skeet
+B-011;978-0321200686;Code Complete;1993
+B-012;978-0000000001;Зламана книга 1;минуле;Невідомий
+B-013;;Порожній ISBN;2020;Автор
+B-014;978-0000000003;Мало колонок

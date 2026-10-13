@@ -1,0 +1,6 @@
+[
+  { "id": "B-101", "isbn": "978-0132350884", "title": "Clean Code", "year": 2008, "author": "Robert Martin" },
+  { "id": "B-102", "isbn": "978-0201633610", "title": "Design Patterns", "year": 1994, "author": "Erich Gamma" },
+  { "id": "B-103", "isbn": "", "title": "Порожній ISBN", "year": 2020 },
+  { "id": "B-104", "isbn": "978-1617294532", "title": "Зламаний рік", "year": 2999, "author": "Jon Skeet" }
+]

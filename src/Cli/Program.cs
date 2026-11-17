@@ -1,73 +1,86 @@
-﻿using Core.Dto;
-using Core.Import;
+﻿using Core.Domain;
 
-string path = args.Length > 0 ? args[0] : Path.Combine("data", "sample.csv");
+Console.WriteLine("=== ЛАБОРАТОРНА РОБОТА 4: Доменна модель ===");
+Console.WriteLine("Предметна область: Бібліотека\n");
 
-if (!File.Exists(path))
+// === Сценарій 1: Успішна робота з доменною моделлю ===
+Console.WriteLine("--- Сценарій 1: Успіх ---");
+try
 {
-    Console.WriteLine($"Файл не знайдено: {Path.GetFullPath(path)}");
-    return 1;
+    BookCopy book = BookCopy.Create("C-101", "978-5-17-08", "C# для початківців");
+    Console.WriteLine(book);
+
+    book.Issue();
+    Console.WriteLine("Після видачі: " + book);
+
+    book.Return();
+    Console.WriteLine("Після повернення: " + book);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Помилка в успішному сценарії: {ex.Message}");
 }
 
-string extension = Path.GetExtension(path).ToLowerInvariant();
-string fileName = Path.GetFileName(path).ToLowerInvariant();
+Console.WriteLine();
 
-// Додаткове завдання 2: якщо файл mixed.csv — запускаємо змішаний імпортер
-if (fileName.Contains("mixed"))
+// === Сценарій 2: Порушення інваріантів ===
+Console.WriteLine("--- Сценарій 2: Порушення інваріантів ---");
+
+TryDo("Повторна видача вже виданого примірника", () => {
+    var b = BookCopy.Create("C-102", "978-1-49-19", "Clean Code", isIssued: true);
+    b.Issue(); // Має кинути InvalidOperationException
+});
+
+TryDo("Створення примірника з порожнім ISBN", () => {
+    BookCopy.Create("C-103", "   ", "Архітектура ПЗ"); // Має кинути ArgumentException
+});
+
+TryDo("Спроба повернути книгу, яка не була видана", () => {
+    var b = BookCopy.Create("C-104", "978-0-13-23", "Refactoring");
+    b.Return(); // Має кинути InvalidOperationException
+});
+
+
+// === Додаткове завдання 2: Сервіс та перевірка кількох сутностей ===
+Console.WriteLine("\n--- Додаткове завдання 2: Сервіс та перевірка кількох сутностей ---");
+var book1 = BookCopy.Create("C-201", "978-0-1", "Книга 1");
+var existingLoans = new List<Loan>
 {
-    MixedImportResult mixed = MixedCsvImporter.Load(path);
-    int totalMixed = mixed.Books.Count + mixed.Readers.Count + mixed.Errors.Count;
-    int successMixed = mixed.Books.Count + mixed.Readers.Count;
-    double errorRateMixed = totalMixed > 0 ? (double)mixed.Errors.Count / totalMixed * 100 : 0;
-
-    Console.WriteLine($"=== Змішаний імпорт ({fileName}) ===");
-    Console.WriteLine($"Книг: {mixed.Books.Count}, Читачів: {mixed.Readers.Count}");
-    
-    foreach (var b in mixed.Books.Take(3))
-        Console.WriteLine($" [Книга]  {b.Id,-6} {b.Title,-25} {b.Year}");
-
-    foreach (var r in mixed.Readers.Take(3))
-        Console.WriteLine($" [Читач]  {r.Id,-6} {r.FullName,-25} {r.Email}");
-
-    if (mixed.Errors.Count > 0)
-    {
-        Console.WriteLine($"Пропущено рядків: {mixed.Errors.Count}");
-        foreach (string e in mixed.Errors)
-            Console.WriteLine($" ! {e}");
-    }
-
-    // Додаткове завдання 3: статистика одним рядком
-    Console.WriteLine(new string('-', 65));
-    Console.WriteLine($"СТАТИСТИКА: Усього: {totalMixed} | Прийнято: {successMixed} | Пропущено: {mixed.Errors.Count} | Помилок: {errorRateMixed:F1}%");
-    return 0;
-}
-
-// Додаткове завдання 1: вибір імпортера за розширенням файлу через switch expression
-ImportResult<BookDto> result = extension switch
-{
-    ".csv" => BookCsvImporter.Load(path),
-    ".json" => BookJsonImporter.Load(path),
-    _ => throw new NotSupportedException($"Розширення '{extension}' не підтримується. Використовуйте .csv або .json")
+    Loan.Open("L-1", "C-001", "Reader-99", DateTime.Now),
+    Loan.Open("L-2", "C-002", "Reader-99", DateTime.Now),
+    Loan.Open("L-3", "C-003", "Reader-99", DateTime.Now),
+    Loan.Open("L-4", "C-004", "Reader-99", DateTime.Now),
+    Loan.Open("L-5", "C-005", "Reader-99", DateTime.Now) // Вже 5 активних видач!
 };
 
-Console.WriteLine($"Завантажено записів: {result.Items.Count}");
-foreach (BookDto b in result.Items.Take(5))
+TryDo("Спроба видати 6-ту книгу тому ж читачу (перевищення ліміту)", () => {
+    LibraryLoanService.CreateLoanSafely("L-6", book1, "Reader-99", existingLoans);
+});
+
+
+// === Додаткове завдання 3: Enum станів та switch переходи ===
+Console.WriteLine("\n--- Додаткове завдання 3: Enum станів та switch переходи ---");
+var reservation = BookReservation.Create("RES-001");
+Console.WriteLine(reservation);
+
+reservation.ChangeStatus(ReservationStatus.Active);
+Console.WriteLine($"Після зміни стану: {reservation}");
+
+TryDo("Заборонений перехід стану (з Active одразу в Draft)", () => {
+    reservation.ChangeStatus(ReservationStatus.Draft);
+});
+
+
+// Допоміжна локальна функція для тестування винятків
+static void TryDo(string title, Action action)
 {
-    Console.WriteLine($" {b.Id,-6} {b.Isbn,-16} {b.Title,-30} {b.Year,4}  {(b.Author ?? "-")}");
+    try
+    {
+        action();
+        Console.WriteLine($"[ПОВАЛЕННЯ ТЕСТУ] {title}: виняток НЕ спрацював, інваріант відсутній!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[УСПІХ ПЕРЕВІРКИ] {title} -> {ex.GetType().Name}: {ex.Message}");
+    }
 }
-
-if (result.Errors.Count > 0)
-{
-    Console.WriteLine($"Пропущено рядків: {result.Errors.Count}");
-    foreach (string e in result.Errors)
-        Console.WriteLine($" ! {e}");
-}
-
-// Додаткове завдання 3: Статистика одним рядком (усього / прийнято / пропущено / % помилок)
-int total = result.Items.Count + result.Errors.Count;
-double errorRate = total > 0 ? (double)result.Errors.Count / total * 100 : 0;
-
-Console.WriteLine(new string('-', 65));
-Console.WriteLine($"СТАТИСТИКА: Усього: {total} | Прийнято: {result.Items.Count} | Пропущено: {result.Errors.Count} | Помилок: {errorRate:F1}%");
-
-return 0;

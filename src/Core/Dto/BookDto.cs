@@ -1,8 +1,8 @@
 namespace Core.Dto;
-
 public sealed record BookDto(
     string Id,
     string Isbn,
     string Title,
-    int Year,
-    string? Author = null);
+    int Year = 2000,
+    string? Author = null,
+    bool IsIssued = false);

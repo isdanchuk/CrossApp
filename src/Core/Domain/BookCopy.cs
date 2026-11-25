@@ -19,7 +19,6 @@ public sealed class BookCopy
         _isIssued = isIssued;
     }
 
-    // Фабричний метод створення примірника з перевірками
     public static BookCopy Create(string id, string isbn, string title, bool isIssued = false)
     {
         if (string.IsNullOrWhiteSpace(id))
@@ -32,25 +31,28 @@ public sealed class BookCopy
         return new BookCopy(id.Trim(), isbn.Trim().ToUpperInvariant(), title.Trim(), isIssued);
     }
 
-    // Бізнес-операція: видача примірника
     public void Issue()
     {
         if (_isIssued)
             throw new InvalidOperationException($"Примірник {Id} (ISBN: {Isbn}) вже виданий, повторна видача неможлива.");
-        
         _isIssued = true;
     }
 
-    // Бізнес-операція: повернення примірника
     public void Return()
     {
         if (!_isIssued)
             throw new InvalidOperationException($"Примірник {Id} не перебуває в оренді, повернення неможливе.");
-        
         _isIssued = false;
     }
 
-    // Мапінг у DTO та назад (знадобиться на 5 тижні)
-    // (Примітка: переконайся, що у тебе в src/Core/Dto/ є відповідний BookCopyDto record)
-    public override string ToString() => $"Примірник {Id} [{Isbn}] «{Title}» — Статус: {(_isIssued ? "Виданий" : "У бібліотеці")}";
+    public BookDto ToDto() => new(Id, Isbn, Title, IsIssued: _isIssued);
+
+    public static BookCopy FromDto(BookDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        return Create(dto.Id, dto.Isbn, dto.Title, dto.IsIssued);
+    }
+
+    public override string ToString() =>
+        $"Примірник {Id} [{Isbn}] «{Title}» — Статус: {(_isIssued ? "Виданий" : "У бібліотеці")}";
 }
